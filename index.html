@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>爱心温馨提示 ❤</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a1a2e;font-family:-apple-system,"PingFang SC","Microsoft YaHei","Helvetica Neue",sans-serif}
+.card{
+  position:absolute;min-width:130px;max-width:190px;border-radius:10px;
+  box-shadow:0 6px 20px rgba(0,0,0,.35);opacity:0;transform:scale(.2) rotate(-8deg);
+  transition:left .9s cubic-bezier(.25,.46,.45,.94),top .9s cubic-bezier(.25,.46,.45,.94),
+             opacity .5s ease,transform .55s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;z-index:1;will-change:transform,left,top;
+}
+.card.show{opacity:1;transform:scale(1) rotate(0)}
+.card.pulse{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.card.float{animation:floaty var(--dur) ease-in-out infinite alternate}
+@keyframes floaty{0%{transform:translateY(0) rotate(var(--rot))}100%{transform:translateY(-8px) rotate(calc(var(--rot) + 2deg))}}
+.titlebar{display:flex;align-items:center;gap:4px;padding:5px 9px;background:rgba(255,255,255,.55);border-radius:10px 10px 0 0;font-size:10.5px;color:#666;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+.title-text{margin-left:5px;font-weight:600;letter-spacing:.3px}
+.body{padding:12px 14px;font-size:14.5px;font-weight:700;color:#3a3a3a;text-align:center;line-height:1.4}
+#hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.45);font-size:12.5px;z-index:9999;pointer-events:none;transition:opacity .6s}
+#hint.hide{opacity:0}
+#musicBtn{
+  position:fixed;bottom:16px;right:16px;z-index:99999;
+  width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;
+  background:rgba(255,255,255,.15);backdrop-filter:blur(6px);
+  font-size:20px;display:flex;align-items:center;justify-content:center;
+  transition:background .3s,transform .2s;color:#fff;
+}
+#musicBtn:hover{background:rgba(255,255,255,.28);transform:scale(1.1)}
+#musicBtn:active{transform:scale(.95)}
+#musicTip{
+  position:fixed;bottom:70px;right:16px;z-index:99998;color:rgba(255,255,255,.35);
+  font-size:10.5px;text-align:right;pointer-events:none;transition:opacity .5s;
+}
+#musicTip.hide{opacity:0}
+</style>
+</head>
+<body>
+
+<button id="musicBtn" title="音乐开 / 关">🔊</button>
+<div id="musicTip">梁博《安然无恙》· 高潮循环<br>轻触屏幕任意处开始播放</div>
+<div id="hint">点击屏幕任意位置可重新播放 ❤</div>
+
+<script>
+/* ========== 文案 & 配色 ========== */
+const TIPS=[
+  "多喝水呀~","保持好心情","好好爱自己","前程似锦","梦想成真",
+  "早点休息","别熬夜","要健康","好运连连","暴富发财",
+  "万事如意","心想事成","注意保暖","愿所有烦恼都消失","顺顺利利",
+  "要幸福","笑口常开","天天开心","记得吃水果","多吃点好的",
+  "你是最棒的","今天也要加油","愿你被温柔以待","一切都会好起来","平安喜乐",
+  "每天都要元气满满","要好好吃饭","天冷了多穿衣服","愿你眼里有光","所求皆如愿"
+];
+const COLORS=[
+  "#FFB3BA","#FFDFBA","#FFFFBA","#BAFFC9","#BAE1FF",
+  "#E8BAFF","#FFB3E6","#B3FFE0","#FFE0B3","#D4B3FF",
+  "#B3D4FF","#FFC9C9","#C9FFBA","#BAFFF5","#FFDAB3",
+  "#F0C9FF","#C9F0FF","#FFE8C9","#D9FFC9","#FFC9E8"
+];
+const TOTAL=100;
+const PAUSE_AFTER_HEART=4500;
+
+/* ========== 爱心参数方程 ========== */
+function heartPt(t,s,cx,cy){
+  const x=16*Math.pow(Math.sin(t),3);
+  const y=-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));
+  return{x:cx+x*s,y:cy+y*s};
+}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function rand(a,b){return a+Math.random()*(b-a)}
+
+/* ========== 背景音乐：梁博《安然无恙》高潮段（隐藏式，无播放器）========== */
+const AUDIO_URL="https://music.163.com/song/media/outer/url?id=2698807244.mp3";
+const CS=218, CE=298;   // 高潮段 3:38 - 4:58（秒）
+let audio=null, playing=false, ready=false;
+
+function makeAudio(){
+  if(audio)return audio;
+  audio=new Audio();
+  audio.src=AUDIO_URL;
+  audio.preload="auto";
+  audio.addEventListener("loadedmetadata",()=>{
+    ready=true;
+    try{audio.currentTime=CS;}catch(e){}
+  });
+  // 只在高潮段循环
+  audio.addEventListener("timeupdate",()=>{
+    if(ready&&(audio.currentTime>=CE||audio.currentTime<CS-0.5)){
+      audio.currentTime=CS;
+    }
+  });
+  return audio;
+}
+function refreshBtn(){
+  const b=document.getElementById("musicBtn");
+  b.textContent=(playing&&!audio.paused)?"\u{1F507}":"\u{1F50A}";
+}
+function startMusic(){
+  makeAudio();
+  if(!ready){audio.addEventListener("loadedmetadata",()=>{try{audio.currentTime=CS;}catch(e){}});}
+  try{audio.currentTime=CS;}catch(e){}
+  audio.play().then(()=>{
+    playing=true;refreshBtn();
+    document.getElementById("musicTip").classList.add("hide");
+  }).catch(()=>{ /* 等待用户手势 */ });
+}
+function tryStart(){
+  if(audio&&!audio.paused)return;
+  startMusic();
+}
+function toggleMusic(){
+  makeAudio();
+  if(audio&&!audio.paused){audio.pause();playing=false;refreshBtn();}
+  else startMusic();
+}
+document.getElementById("musicBtn").addEventListener("click",function(e){
+  e.stopPropagation();toggleMusic();
+});
+/* 任意首次轻触即播放（绕过自动播放限制） */
+const once=()=>{if(!audio||audio.paused){tryStart();}};
+document.addEventListener("pointerdown",once,{once:false});
+document.addEventListener("touchstart",once,{passive:true});
+
+/* ========== 卡片动画 ========== */
+let cards=[],count=0,running=false;
+const W=()=>window.innerWidth, H=()=>window.innerHeight;
+
+function makeCard(x,y,tip,color,n){
+  const d=document.createElement("div");
+  d.className="card";
+  d.style.left=x+"px";d.style.top=y+"px";d.style.background=color;
+  d.innerHTML='<div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>'
+    +'<span class="title-text">\u6E29\u99A8\u63D0\u793A ('+n+'/100)</span></div>'
+    +'<div class="body">'+tip+'</div>';
+  document.body.appendChild(d);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>d.classList.add("show")));
+  return d;
+}
+function clearAll(){cards.forEach(c=>c.el.remove());cards=[];count=0;}
+
+function start(){
+  if(running)return;running=true;
+  clearAll();
+  const w=W(),h=H(),cx=w/2,cy=h/2-10;
+  const s=Math.min(w,h)/42;
+  const hint=document.getElementById("hint");
+  hint.classList.add("hide");
+
+  const N=42,pts=[];
+  for(let i=0;i<N;i++){const t=i/N*2*Math.PI;const p=heartPt(t,s,cx,cy);pts.push(p);}
+  let idx=0;
+  const iv=setInterval(()=>{
+    if(idx>=N){
+      clearInterval(iv);
+      cards.forEach(c=>c.el.classList.add("pulse"));
+      setTimeout(()=>{
+        cards.forEach(c=>c.el.classList.remove("pulse"));
+        scatter();
+      },PAUSE_AFTER_HEART);
+      return;
+    }
+    const p=pts[idx];count++;
+    const el=makeCard(p.x-65,p.y-28,pick(TIPS),pick(COLORS),Math.min(count,TOTAL));
+    cards.push({el,hx:p.x-65,hy:p.y-28});
+    idx++;
+  },75);
+
+  function scatter(){
+    cards.forEach((c,i)=>{
+      setTimeout(()=>{
+        const rx=rand(10,w-180),ry=rand(10,h-90);
+        c.el.style.left=rx+"px";c.el.style.top=ry+"px";
+        c.el.style.zIndex=Math.floor(rand(1,80));
+        c.el.style.setProperty("--rot",rand(-4,4)+"deg");
+        c.el.style.setProperty("--dur",rand(2.5,4.5)+"s");
+        c.el.classList.add("float");
+      },i*25);
+    });
+    let added=cards.length;
+    const av=setInterval(()=>{
+      if(added>=TOTAL){clearInterval(av);running=false;hint.classList.remove("hide");return;}
+      const rx=rand(10,w-180),ry=rand(10,h-90);count++;
+      const el=makeCard(rx,ry,pick(TIPS),pick(COLORS),Math.min(count,TOTAL));
+      el.style.zIndex=Math.floor(rand(1,80));
+      el.style.setProperty("--rot",rand(-4,4)+"deg");
+      el.style.setProperty("--dur",rand(2.5,4.5)+"s");
+      setTimeout(()=>el.classList.add("float"),600);
+      cards.push({el,hx:rx,hy:ry});
+      added++;
+    },55);
+  }
+}
+
+/* ========== 页面加载即开始（动画自动；音乐尽力自动播放）========== */
+window.addEventListener("load",function(){
+  start();
+  makeAudio();
+  startMusic();   // 若被浏览器拦截则静默等待首次轻触
+});
+
+document.body.addEventListener("click",function(e){
+  if(e.target.id==="musicBtn"||e.target.closest("#musicBtn"))return;
+  clearAll();running=false;start();
+});
+
+window.addEventListener("resize",function(){
+  if(!running){clearAll();start();}
+});
+</script>
+</body>
+</html>
