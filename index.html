@@ -6,50 +6,85 @@
 <title>爱心温馨提示 ❤</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;background:#1a1a2e;font-family:-apple-system,"PingFang SC","Microsoft YaHei","Helvetica Neue",sans-serif}
+html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:-apple-system,"PingFang SC","Microsoft YaHei","Helvetica Neue",sans-serif}
+/* ---- 流光渐变背景 ---- */
+#bgfx{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(620px 620px at 18% 16%, rgba(255,80,140,.20), transparent 62%),
+    radial-gradient(720px 720px at 82% 28%, rgba(120,80,255,.18), transparent 62%),
+    radial-gradient(700px 700px at 50% 90%, rgba(255,150,50,.12), transparent 62%);
+  animation:bgmove 16s ease-in-out infinite alternate;}
+@keyframes bgmove{0%{transform:scale(1) translate(0,0);opacity:.75}
+  100%{transform:scale(1.18) translate(-1.5%,-2%);opacity:1}}
+/* ---- 漂浮小爱心 ---- */
+.fh{position:fixed;bottom:-60px;z-index:0;opacity:.15;pointer-events:none;
+  animation:floatUp linear infinite;will-change:transform;filter:saturate(1.2)}
+@keyframes floatUp{
+  0%{transform:translateY(0) translateX(0) rotate(0)}
+  50%{transform:translateY(-55vh) translateX(var(--sway)) rotate(22deg)}
+  100%{transform:translateY(-118vh) translateX(calc(var(--sway)*-1)) rotate(-14deg)}}
+/* ---- 卡片 ---- */
 .card{
-  position:absolute;min-width:130px;max-width:190px;border-radius:10px;
-  box-shadow:0 6px 20px rgba(0,0,0,.35);opacity:0;transform:scale(.2) rotate(-8deg);
-  transition:left .9s cubic-bezier(.25,.46,.45,.94),top .9s cubic-bezier(.25,.46,.45,.94),
-             opacity .5s ease,transform .55s cubic-bezier(.34,1.56,.64,1);
+  position:absolute;min-width:136px;max-width:196px;border-radius:13px;
+  box-shadow:0 12px 28px rgba(0,0,0,.42),0 0 20px var(--glow);
+  border:1.5px solid rgba(255,255,255,.75);
+  opacity:0;transform:scale(.15) rotate(var(--rot0));
+  transition:left .95s cubic-bezier(.25,.46,.45,.94),top .95s cubic-bezier(.25,.46,.45,.94),
+             opacity .45s ease,transform .6s cubic-bezier(.22,1.7,.36,1);
   pointer-events:none;z-index:1;will-change:transform,left,top;
 }
-.card.show{opacity:1;transform:scale(1) rotate(0)}
-.card.pulse{animation:pulse 1.2s ease-in-out infinite}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.card.show{opacity:1;transform:scale(1) rotate(var(--rot0))}
+.card.pulse{animation:pulse 1.1s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
 .card.float{animation:floaty var(--dur) ease-in-out infinite alternate}
-@keyframes floaty{0%{transform:translateY(0) rotate(var(--rot))}100%{transform:translateY(-8px) rotate(calc(var(--rot) + 2deg))}}
-.titlebar{display:flex;align-items:center;gap:4px;padding:5px 9px;background:rgba(255,255,255,.55);border-radius:10px 10px 0 0;font-size:10.5px;color:#666;white-space:nowrap}
-.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+@keyframes floaty{0%{transform:translateY(0) rotate(var(--rot0))}
+  100%{transform:translateY(-9px) rotate(calc(var(--rot0) + 2.5deg))}}
+.titlebar{display:flex;align-items:center;gap:4px;padding:6px 10px;background:rgba(255,255,255,.78);
+  border-radius:13px 13px 0 0;font-size:11px;color:#6b2138;white-space:nowrap;font-weight:600}
+.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:inset 0 -1px 2px rgba(0,0,0,.15)}
 .dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
-.title-text{margin-left:5px;font-weight:600;letter-spacing:.3px}
-.body{padding:12px 14px;font-size:14.5px;font-weight:700;color:#3a3a3a;text-align:center;line-height:1.4}
-#hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.45);font-size:12.5px;z-index:9999;pointer-events:none;transition:opacity .6s}
+.title-text{margin-left:6px;letter-spacing:.4px}
+.body{padding:13px 15px;font-size:15.5px;font-weight:800;color:#4a0d28;text-align:center;line-height:1.45;
+  text-shadow:0 1px 1px rgba(255,255,255,.35)}
+/* ---- 心形光晕 ---- */
+#halo{position:fixed;left:50%;top:50%;z-index:0;pointer-events:none;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,120,170,.55) 0%,rgba(255,60,120,.28) 35%,transparent 70%);
+  opacity:0;transform:translate(-50%,-50%) scale(.3);
+  transition:opacity .9s ease;filter:blur(2px)}
+#halo.on{opacity:1;animation:haloBeat 1.15s ease-in-out infinite}
+@keyframes haloBeat{0%,100%{transform:translate(-50%,-50%) scale(1)}
+  50%{transform:translate(-50%,-50%) scale(1.12)}}
+/* ---- 迸发粒子 ---- */
+.burst{position:absolute;z-index:50;pointer-events:none;font-size:15px;
+  animation:fly 1.15s cubic-bezier(.08,.7,.25,1) forwards}
+@keyframes fly{0%{transform:translate(0,0) scale(.25);opacity:1}
+  100%{transform:translate(var(--tx),var(--ty)) scale(1.7);opacity:0}}
+/* ---- 控件 ---- */
+#hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.5);font-size:12.5px;z-index:9999;pointer-events:none;transition:opacity .6s}
 #hint.hide{opacity:0}
-#musicBtn{
-  position:fixed;bottom:16px;right:16px;z-index:99999;
-  width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;
-  background:rgba(255,255,255,.15);backdrop-filter:blur(6px);
-  font-size:20px;display:flex;align-items:center;justify-content:center;
-  transition:background .3s,transform .2s;color:#fff;
-}
-#musicBtn:hover{background:rgba(255,255,255,.28);transform:scale(1.1)}
-#musicBtn:active{transform:scale(.95)}
-#musicTip{
-  position:fixed;bottom:70px;right:16px;z-index:99998;color:rgba(255,255,255,.35);
-  font-size:10.5px;text-align:right;pointer-events:none;transition:opacity .5s;
-}
+#musicBtn{position:fixed;bottom:16px;right:16px;z-index:99999;width:46px;height:46px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.25);cursor:pointer;background:rgba(255,255,255,.14);
+  backdrop-filter:blur(6px);font-size:21px;display:flex;align-items:center;justify-content:center;
+  transition:background .3s,transform .2s;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+#musicBtn:hover{background:rgba(255,255,255,.3);transform:scale(1.1)}
+#musicTip{position:fixed;bottom:72px;right:16px;z-index:99998;color:rgba(255,255,255,.38);
+  font-size:10.5px;text-align:right;pointer-events:none;transition:opacity .5s}
 #musicTip.hide{opacity:0}
+#brand{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:9998;color:rgba(255,255,255,.55);
+  font-size:14px;font-weight:700;letter-spacing:3px;pointer-events:none;
+  text-shadow:0 0 18px rgba(255,90,150,.6);white-space:nowrap}
 </style>
 </head>
 <body>
-
+<div id="bgfx"></div>
+<div id="halo"></div>
+<div id="brand">❤ 温馨提示 · 万事顺意 ❤</div>
 <button id="musicBtn" title="音乐开 / 关">🔊</button>
-<div id="musicTip">梁博《安然无恙》· 高潮循环<br>轻触屏幕任意处开始播放</div>
-<div id="hint">点击屏幕任意位置可重新播放 ❤</div>
+<div id="musicTip">梁博《安然无恙》· 高潮 2:00-3:20 循环<br>轻触屏幕任意处开始播放</div>
+<div id="hint">循环播放中 · 点击可立即重播</div>
 
 <script>
-/* ========== 文案 & 配色 ========== */
+/* ========== 文案 & 配色（高饱和双色渐变） ========== */
 const TIPS=[
   "多喝水呀~","保持好心情","好好爱自己","前程似锦","梦想成真",
   "早点休息","别熬夜","要健康","好运连连","暴富发财",
@@ -58,14 +93,19 @@ const TIPS=[
   "你是最棒的","今天也要加油","愿你被温柔以待","一切都会好起来","平安喜乐",
   "每天都要元气满满","要好好吃饭","天冷了多穿衣服","愿你眼里有光","所求皆如愿"
 ];
-const COLORS=[
-  "#FFB3BA","#FFDFBA","#FFFFBA","#BAFFC9","#BAE1FF",
-  "#E8BAFF","#FFB3E6","#B3FFE0","#FFE0B3","#D4B3FF",
-  "#B3D4FF","#FFC9C9","#C9FFBA","#BAFFF5","#FFDAB3",
-  "#F0C9FF","#C9F0FF","#FFE8C9","#D9FFC9","#FFC9E8"
+const GRADS=[
+  ["#FFA6B5","#FF5E7E"],["#FFC3A0","#FF8A5C"],["#FFEDB3","#FFD24D"],["#B7F0AD","#7BD88F"],
+  ["#A9DEF9","#63B4FF"],["#E3C6FF","#B388FF"],["#FFC2E2","#FF7EB6"],["#C4F5E0","#7FE0B8"],
+  ["#FFE0A6","#FFBB4D"],["#C9D4FF","#8FA8FF"],["#FFC9C9","#FF8A8A"],["#D9F7BE","#A8E063"],
+  ["#FDE2FF","#E9A8FF"],["#BDE0FE","#6FA8DC"],["#FFF1C1","#FFD166"],["#FADADD","#F2A0A8"]
 ];
+const GLOWS=["rgba(255,94,126,.45)","rgba(255,138,92,.4)","rgba(255,210,77,.4)","rgba(123,216,143,.4)",
+  "rgba(99,180,255,.4)","rgba(179,136,255,.42)","rgba(255,126,182,.42)","rgba(127,224,184,.4)",
+  "rgba(255,187,77,.4)","rgba(143,168,255,.4)","rgba(255,138,138,.4)","rgba(168,224,99,.4)",
+  "rgba(233,168,255,.42)","rgba(111,168,220,.4)","rgba(255,209,102,.4)","rgba(242,160,168,.4)"];
 const TOTAL=100;
 const PAUSE_AFTER_HEART=4500;
+const BURST_GLYPHS=["❤","💗","✨","💖","⭐","💕","🌟","💘"];
 
 /* ========== 爱心参数方程 ========== */
 function heartPt(t,s,cx,cy){
@@ -76,66 +116,63 @@ function heartPt(t,s,cx,cy){
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function rand(a,b){return a+Math.random()*(b-a)}
 
-/* ========== 背景音乐：梁博《安然无恙》高潮段（隐藏式，无播放器）========== */
+/* ========== 氛围层：漂浮小爱心 ========== */
+(function(){
+  const g=["❤","💗","💕","💛","💙","✨"];
+  for(let i=0;i<16;i++){
+    const s=document.createElement("span");
+    s.className="fh";s.textContent=pick(g);
+    s.style.left=rand(0,100)+"vw";
+    s.style.fontSize=rand(12,30)+"px";
+    s.style.animationDuration=rand(11,24)+"s";
+    s.style.animationDelay=(-rand(0,24))+"s";
+    s.style.setProperty("--sway",rand(-6,6)+"vw");
+    document.body.appendChild(s);
+  }
+})();
+
+/* ========== 背景音乐：梁博《安然无恙》高潮段（隐藏式） ========== */
 const AUDIO_URL="https://music.163.com/song/media/outer/url?id=2698807244.mp3";
 const CS=120, CE=200;   // 高潮段 2:00 - 3:20（秒）
-let audio=null, playing=false, ready=false;
-
+let audio=null,ready=false;
 function makeAudio(){
   if(audio)return audio;
   audio=new Audio();
-  audio.src=AUDIO_URL;
-  audio.preload="auto";
-  audio.addEventListener("loadedmetadata",()=>{
-    ready=true;
-    try{audio.currentTime=CS;}catch(e){}
-  });
-  // 只在高潮段循环
+  audio.src=AUDIO_URL;audio.preload="auto";
+  audio.addEventListener("loadedmetadata",()=>{ready=true;try{audio.currentTime=CS;}catch(e){}});
   audio.addEventListener("timeupdate",()=>{
-    if(ready&&(audio.currentTime>=CE||audio.currentTime<CS-0.5)){
-      audio.currentTime=CS;
-    }
+    if(ready&&(audio.currentTime>=CE||audio.currentTime<CS-0.5))audio.currentTime=CS;
   });
   return audio;
 }
-function refreshBtn(){
-  const b=document.getElementById("musicBtn");
-  b.textContent=(playing&&!audio.paused)?"\u{1F507}":"\u{1F50A}";
-}
+function refreshBtn(){const b=document.getElementById("musicBtn");
+  b.textContent=(audio&&!audio.paused)?"\u{1F507}":"\u{1F50A}";}
 function startMusic(){
   makeAudio();
-  if(!ready){audio.addEventListener("loadedmetadata",()=>{try{audio.currentTime=CS;}catch(e){}});}
   try{audio.currentTime=CS;}catch(e){}
-  audio.play().then(()=>{
-    playing=true;refreshBtn();
-    document.getElementById("musicTip").classList.add("hide");
-  }).catch(()=>{ /* 等待用户手势 */ });
+  audio.play().then(()=>{refreshBtn();document.getElementById("musicTip").classList.add("hide");})
+    .catch(()=>{});
 }
-function tryStart(){
-  if(audio&&!audio.paused)return;
-  startMusic();
-}
-function toggleMusic(){
-  makeAudio();
-  if(audio&&!audio.paused){audio.pause();playing=false;refreshBtn();}
-  else startMusic();
-}
-document.getElementById("musicBtn").addEventListener("click",function(e){
-  e.stopPropagation();toggleMusic();
-});
-/* 任意首次轻触即播放（绕过自动播放限制） */
-const once=()=>{if(!audio||audio.paused){tryStart();}};
-document.addEventListener("pointerdown",once,{once:false});
-document.addEventListener("touchstart",once,{passive:true});
+function tryStart(){if(audio&&!audio.paused)return;startMusic();}
+function toggleMusic(){makeAudio();
+  if(audio&&!audio.paused){audio.pause();refreshBtn();}else startMusic();}
+document.getElementById("musicBtn").addEventListener("click",function(e){e.stopPropagation();toggleMusic();});
+document.addEventListener("pointerdown",function(){if(!audio||audio.paused)tryStart();});
+document.addEventListener("touchstart",function(){if(!audio||audio.paused)tryStart();},{passive:true});
 
 /* ========== 卡片动画 ========== */
 let cards=[],count=0,running=false;
 const W=()=>window.innerWidth, H=()=>window.innerHeight;
+const halo=document.getElementById("halo");
 
-function makeCard(x,y,tip,color,n){
+function makeCard(x,y,tip,gi,n){
   const d=document.createElement("div");
+  const rot=rand(-5,5);
   d.className="card";
-  d.style.left=x+"px";d.style.top=y+"px";d.style.background=color;
+  d.style.left=x+"px";d.style.top=y+"px";
+  d.style.background="linear-gradient(165deg,"+GRADS[gi][0]+","+GRADS[gi][1]+")";
+  d.style.setProperty("--glow",GLOWS[gi]);
+  d.style.setProperty("--rot0",rot+"deg");
   d.innerHTML='<div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>'
     +'<span class="title-text">\u6E29\u99A8\u63D0\u793A ('+n+'/100)</span></div>'
     +'<div class="body">'+tip+'</div>';
@@ -143,15 +180,32 @@ function makeCard(x,y,tip,color,n){
   requestAnimationFrame(()=>requestAnimationFrame(()=>d.classList.add("show")));
   return d;
 }
+function burst(cx,cy){
+  const n=26;
+  for(let i=0;i<n;i++){
+    const s=document.createElement("span");
+    s.className="burst";s.textContent=pick(BURST_GLYPHS);
+    const a=Math.random()*Math.PI*2,d=rand(70,240);
+    s.style.left=(cx-8)+"px";s.style.top=(cy-8)+"px";
+    s.style.setProperty("--tx",Math.cos(a)*d+"px");
+    s.style.setProperty("--ty",Math.sin(a)*d+"px");
+    s.style.fontSize=rand(13,26)+"px";
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),1250);
+  }
+}
 function clearAll(){cards.forEach(c=>c.el.remove());cards=[];count=0;}
 
 function start(){
   if(running)return;running=true;
   clearAll();
-  const w=W(),h=H(),cx=w/2,cy=h/2-10;
+  const w=W(),h=H(),cx=w/2,cy=h/2-8;
   const s=Math.min(w,h)/42;
   const hint=document.getElementById("hint");
   hint.classList.add("hide");
+  halo.classList.remove("on");
+  halo.style.width=halo.style.height=(s*36)+"px";
+  halo.style.left="50%";halo.style.top="50%";
 
   const N=42,pts=[];
   for(let i=0;i<N;i++){const t=i/N*2*Math.PI;const p=heartPt(t,s,cx,cy);pts.push(p);}
@@ -159,72 +213,70 @@ function start(){
   const iv=setInterval(()=>{
     if(idx>=N){
       clearInterval(iv);
+      /* 心形完成：光晕脉动 + 粒子迸发 + 卡片同频跳动 */
+      halo.classList.add("on");
       cards.forEach(c=>c.el.classList.add("pulse"));
+      burst(cx,cy);
+      setTimeout(()=>burst(cx,cy),350);
       setTimeout(()=>{
         cards.forEach(c=>c.el.classList.remove("pulse"));
+        halo.classList.remove("on");
         scatter();
       },PAUSE_AFTER_HEART);
       return;
     }
     const p=pts[idx];count++;
-    const el=makeCard(p.x-65,p.y-28,pick(TIPS),pick(COLORS),Math.min(count,TOTAL));
-    cards.push({el,hx:p.x-65,hy:p.y-28});
+    const gi=Math.floor(Math.random()*GRADS.length);
+    const el=makeCard(p.x-72,p.y-30,pick(TIPS),gi,Math.min(count,TOTAL));
+    cards.push({el});
     idx++;
-  },75);
+  },72);
 
   function scatter(){
     cards.forEach((c,i)=>{
       setTimeout(()=>{
-        const rx=rand(10,w-180),ry=rand(10,h-90);
+        const rx=rand(8,w-190),ry=rand(8,h-96);
         c.el.style.left=rx+"px";c.el.style.top=ry+"px";
-        c.el.style.zIndex=Math.floor(rand(1,80));
-        c.el.style.setProperty("--rot",rand(-4,4)+"deg");
+        c.el.style.zIndex=Math.floor(rand(2,60));
         c.el.style.setProperty("--dur",rand(2.5,4.5)+"s");
         c.el.classList.add("float");
-      },i*25);
+      },i*22);
     });
     let added=cards.length;
     const av=setInterval(()=>{
       if(added>=TOTAL){
         clearInterval(av);running=false;hint.classList.remove("hide");
-        // 自动循环：停留片刻后整段动画重新播放
         clearTimeout(window.__auto);
-        window.__auto=setTimeout(()=>{
-          if(!running){clearAll();start();}
-        },6500);
+        window.__auto=setTimeout(()=>{if(!running){clearAll();start();}},6500);
         return;
       }
-      const rx=rand(10,w-180),ry=rand(10,h-90);count++;
-      const el=makeCard(rx,ry,pick(TIPS),pick(COLORS),Math.min(count,TOTAL));
-      el.style.zIndex=Math.floor(rand(1,80));
-      el.style.setProperty("--rot",rand(-4,4)+"deg");
+      const rx=rand(8,w-190),ry=rand(8,h-96);count++;
+      const gi=Math.floor(Math.random()*GRADS.length);
+      const el=makeCard(rx,ry,pick(TIPS),gi,Math.min(count,TOTAL));
+      el.style.zIndex=Math.floor(rand(2,60));
       el.style.setProperty("--dur",rand(2.5,4.5)+"s");
       setTimeout(()=>el.classList.add("float"),600);
-      cards.push({el,hx:rx,hy:ry});
+      cards.push({el});
       added++;
     },55);
   }
 }
 
-/* ========== 页面加载即开始（动画自动；音乐尽力自动播放）========== */
+/* ========== 启动 ========== */
 window.addEventListener("load",function(){
   start();
   makeAudio();
-  startMusic();   // 若被浏览器拦截则静默等待首次轻触
-  // 多轮重试，尽力在微信内直接出声
+  startMusic();
   setTimeout(function(){if(audio&&audio.paused)tryStart();},500);
   setTimeout(function(){if(audio&&audio.paused)tryStart();},1500);
 });
-/* 微信内置浏览器：JSBridge 就绪后自动播放（安卓微信常见方案） */
 if(document.addEventListener){
   document.addEventListener("WeixinJSBridgeReady",function(){tryStart();},false);
 }
-
 document.body.addEventListener("click",function(e){
   if(e.target.id==="musicBtn"||e.target.closest("#musicBtn"))return;
   clearAll();running=false;start();
 });
-
 window.addEventListener("resize",function(){
   if(!running){clearAll();start();}
 });
