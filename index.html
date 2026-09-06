@@ -183,7 +183,7 @@ function bigFlash(){flashOnce();setTimeout(flashOnce,240);setTimeout(flashOnce,4
 /* ========== 点击提醒（视觉 + 语音） ========== */
 const pill=document.getElementById("tapPill");
 function hidePill(){pill.classList.add("hide");}
-const SAY="点击一下更精彩";
+const SAY="点击一下，愿你开心一整天哦";
 function speakInvite(){
   try{
     if(!("speechSynthesis" in window))return;
