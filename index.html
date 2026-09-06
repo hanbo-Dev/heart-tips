@@ -96,48 +96,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:
 @keyframes pillPulse{0%,100%{transform:translateX(-50%) scale(1);box-shadow:0 0 16px rgba(255,80,160,.4)}
   50%{transform:translateX(-50%) scale(1.09);box-shadow:0 0 40px rgba(255,80,160,.9)}}
 #tapPill.hide{opacity:0;transform:translateX(-50%) scale(.5);transition:opacity .45s,transform .45s;animation:none}
-/* ---- 歌词发光大字收尾（全屏视觉冲击） ---- */
+/* ---- 歌词发光大字收尾（日落场景背景） ---- */
 #finale{position:fixed;inset:0;z-index:90;display:none;flex-direction:column;
   align-items:center;justify-content:center;gap:30px;pointer-events:none;overflow:hidden;
-  perspective:900px;transform-style:preserve-3d;
-  background:radial-gradient(ellipse at 50% 55%, rgba(52,10,52,.7), rgba(13,13,26,.35) 75%)}
-#beams{position:absolute;left:50%;top:50%;width:160vmax;height:160vmax;
-  transform:translate(-50%,-50%);opacity:.5;filter:blur(6px);pointer-events:none;
-  background:repeating-conic-gradient(from 0deg,rgba(255,120,190,.16) 0deg 5deg,
-    rgba(255,80,160,.04) 5deg 14deg,transparent 14deg 30deg);
-  animation:beamsRot 12s linear infinite}
-@keyframes beamsRot{0%{transform:translate(-50%,-50%) rotate(0)}100%{transform:translate(-50%,-50%) rotate(360deg)}}
-/* 双色 3D 环绕冲击环：粉环+青环整体沿纵深轨迹，下穿上/上穿下，与文字前后交错 */
-.ring{position:absolute;left:50%;top:50%;width:30vmin;height:30vmin;
-  pointer-events:none;transform-style:preserve-3d;opacity:0;
-  will-change:transform,opacity}
-.ring .rp,.ring .rb{position:absolute;border-radius:50%}
-/* 日出环：暖金→橘粉 渐变光晕 */
-.ring .rp{inset:0;
-  background:conic-gradient(from 90deg,#ffe9b8 0deg,#ffc46b 55deg,#ff9068 120deg,#ff6f8f 195deg,#ffb08a 260deg,#ffe9b8 360deg);
-  -webkit-mask:radial-gradient(closest-side,transparent calc(100% - 5px),#000 calc(100% - 3.5px));
-  mask:radial-gradient(closest-side,transparent calc(100% - 5px),#000 calc(100% - 3.5px));
-  filter:drop-shadow(0 0 12px rgba(255,150,80,.95))}
-/* 日落环：橘→红→紫 渐变光晕，比日出环大一圈保持错位 */
-.ring .rb{inset:-8px;
-  background:conic-gradient(from 90deg,#ffd08a 0deg,#ff8f4f 60deg,#ff4f6e 135deg,#c04fd0 215deg,#ff8f5f 300deg,#ffd08a 360deg);
-  -webkit-mask:radial-gradient(closest-side,transparent calc(100% - 5px),#000 calc(100% - 3.5px));
-  mask:radial-gradient(closest-side,transparent calc(100% - 5px),#000 calc(100% - 3.5px));
-  filter:drop-shadow(0 0 14px rgba(255,120,60,.9))}
-/* 上穿：从文字下方(前景)升到文字上方(背景) */
-.ring.hoopUp{animation:hoopUp 1.5s cubic-bezier(.45,.05,.5,1) both}
-@keyframes hoopUp{
-  0%{opacity:0;transform:translate(-50%,calc(-50% + 40vmin)) translateZ(160px) rotateX(80deg) scale(.5)}
-  16%{opacity:1}
-  55%{transform:translate(-50%,-50%) translateZ(20px) rotateX(76deg) scale(1)}
-  100%{opacity:0;transform:translate(-50%,calc(-50% - 48vmin)) translateZ(-170px) rotateX(76deg) scale(1.12)}}
-/* 下穿：从文字上方(背景)降到文字下方(前景) */
-.ring.hoopDown{animation:hoopDown 1.5s cubic-bezier(.45,.05,.5,1) both}
-@keyframes hoopDown{
-  0%{opacity:0;transform:translate(-50%,calc(-50% - 42vmin)) translateZ(-170px) rotateX(80deg) scale(.5)}
-  16%{opacity:1}
-  55%{transform:translate(-50%,-50%) translateZ(-20px) rotateX(76deg) scale(1)}
-  100%{opacity:0;transform:translate(-50%,calc(-50% + 42vmin)) translateZ(170px) rotateX(76deg) scale(1.12)}}
+  perspective:900px;
+  background:
+    radial-gradient(ellipse at 50% 76%,
+      rgba(255,240,160,.95) 0%,rgba(255,200,95,.6) 10%,rgba(255,160,80,.22) 24%,transparent 44%),
+    radial-gradient(ellipse at 50% 102%, rgba(255,170,90,.45) 0%,transparent 55%),
+    linear-gradient(180deg,#160b38 0%,#3a1660 14%,#712a78 30%,#b23a6b 46%,
+      #e05a4e 62%,#ef7f40 77%,#f6a95a 90%,#ffe6b0 100%)}
 body.shake{animation:shakeS .55s linear}
 @keyframes shakeS{0%,100%{transform:translate(0,0)}
   15%{transform:translate(-12px,7px)}30%{transform:translate(10px,-9px)}
@@ -178,7 +146,7 @@ body.shake{animation:shakeS .55s linear}
 <div id="bgfx"></div>
 <div id="halo"></div>
 <div id="flash"></div>
-<div id="finale"><div id="beams"></div><div class="fline" id="fl1"></div><div class="fline" id="fl2"></div><div id="fsub"></div></div>
+<div id="finale"><div class="fline" id="fl1"></div><div class="fline" id="fl2"></div><div id="fsub"></div></div>
 <audio id="bgm" autoplay muted loop playsinline preload="auto" style="display:none"></audio>
 <div id="brand">❤ 温馨提示 · 万事顺意 ❤</div>
 <div id="tapPill">✨ 点击一下，愿你开心一整天哦 ✨</div>
@@ -283,21 +251,9 @@ function cancelFinale(){
   finale.style.display="none";
   fl1.innerHTML="";fl2.innerHTML="";fsub.classList.remove("on");
 }
-let ringTick=0;
-function spawnRing(){
-  const r=document.createElement("div");
-  r.className="ring";
-  r.innerHTML="<i class='rp'></i><i class='rb'></i>";
-  r.classList.add(ringTick%2===0?"hoopUp":"hoopDown");
-  ringTick++;
-  finale.appendChild(r);
-  setTimeout(()=>r.remove(),1700);
-}
-/* 全屏冲击：闪光 + 冲击波环 + 漫天粒子 + 震动 + 屏幕抖动 */
+/* 全屏冲击：闪光 + 漫天粒子 + 震动 + 屏幕抖动 */
 function impact(x,y,big){
   flashOnce();
-  spawnRing();
-  if(big){setTimeout(spawnRing,130);setTimeout(spawnRing,290);}
   const dmax=Math.max(W(),H())*0.62;
   burst(x,y,big?170:130,50,dmax);
   vib(big?[40,60,120]:[50,80]);
