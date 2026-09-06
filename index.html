@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>爱心温馨提示 ❤</title>
 <script>
-/* 微信桥接（head 最先执行；桥若已就绪，轮询等 <audio> 出现后解静音抢播） */
+/* 微信桥接：head 最先执行，桥若已就绪则轮询等 <audio> 后解静音抢播 */
 function __wxUnlock(){
   var iv=setInterval(function(){
     var a=document.getElementById('bgm');
@@ -77,9 +77,27 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:
 @keyframes haloBeat{0%,100%{transform:translate(-50%,-50%) scale(1)}
   50%{transform:translate(-50%,-50%) scale(1.12)}}
 .burst{position:absolute;z-index:50;pointer-events:none;font-size:15px;
-  animation:fly 1.2s cubic-bezier(.08,.7,.25,1) forwards}
-@keyframes fly{0%{transform:translate(0,0) scale(.25);opacity:1}
-  100%{transform:translate(var(--tx),var(--ty)) scale(1.8);opacity:0}}
+  animation:fly 1.3s cubic-bezier(.08,.7,.25,1) forwards}
+@keyframes fly{0%{transform:translate(0,0) scale(.2);opacity:1}
+  100%{transform:translate(var(--tx),var(--ty)) scale(2);opacity:0}}
+/* ---- 整屏粉白闪光 ---- */
+#flash{position:fixed;inset:0;z-index:95;pointer-events:none;opacity:0;
+  background:radial-gradient(circle at 50% 45%, rgba(255,255,255,.95),
+    rgba(255,175,222,.6) 38%, rgba(255,70,160,.16) 72%, transparent 90%)}
+#flash.on{animation:flashFX .7s ease-out forwards}
+@keyframes flashFX{0%{opacity:0;transform:scale(.55)}
+  16%{opacity:1;transform:scale(1)}
+  100%{opacity:0;transform:scale(1.18)}}
+/* ---- 「点击一下更精彩」提示条 ---- */
+#tapPill{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);z-index:99998;
+  padding:11px 24px;border-radius:40px;background:rgba(255,255,255,.12);
+  border:1.5px solid rgba(255,190,228,.6);color:#ffd9eb;font-size:15px;font-weight:800;
+  letter-spacing:2px;backdrop-filter:blur(8px);text-shadow:0 0 12px rgba(255,120,190,.9);
+  box-shadow:0 0 24px rgba(255,80,160,.45);pointer-events:none;white-space:nowrap;
+  animation:pillPulse 1s ease-in-out infinite}
+@keyframes pillPulse{0%,100%{transform:translateX(-50%) scale(1);box-shadow:0 0 16px rgba(255,80,160,.4)}
+  50%{transform:translateX(-50%) scale(1.09);box-shadow:0 0 40px rgba(255,80,160,.9)}}
+#tapPill.hide{opacity:0;transform:translateX(-50%) scale(.5);transition:opacity .45s,transform .45s;animation:none}
 #hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.5);font-size:12.5px;z-index:9999;pointer-events:none;transition:opacity .6s}
 #hint.hide{opacity:0}
 #musicBtn{position:fixed;bottom:16px;right:16px;z-index:99999;width:46px;height:46px;border-radius:50%;
@@ -98,8 +116,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:
 <body>
 <div id="bgfx"></div>
 <div id="halo"></div>
+<div id="flash"></div>
 <audio id="bgm" autoplay muted loop playsinline preload="auto" style="display:none"></audio>
 <div id="brand">❤ 温馨提示 · 万事顺意 ❤</div>
+<div id="tapPill">✨ 点击一下更精彩 ✨</div>
 <button id="musicBtn" title="音乐开 / 关">🔊</button>
 <div id="musicTip">梁博《安然无恙》· 高潮 2:00-3:20 循环<br>音乐自动播放中…</div>
 <div id="hint">循环播放中 · 点击可立即重播</div>
@@ -153,58 +173,81 @@ function vib(pattern){try{if(navigator.vibrate)navigator.vibrate(pattern);}catch
   }
 })();
 
-/* ========== 背景音乐（免点击自动起播 v6） ========== */
+/* ========== 全屏粉光闪屏 ========== */
+const flashEl=document.getElementById("flash");
+function flashOnce(){
+  flashEl.classList.remove("on");void flashEl.offsetWidth;flashEl.classList.add("on");
+}
+function bigFlash(){flashOnce();setTimeout(flashOnce,240);setTimeout(flashOnce,480);}
+
+/* ========== 点击提醒（视觉 + 语音） ========== */
+const pill=document.getElementById("tapPill");
+function hidePill(){pill.classList.add("hide");}
+const SAY="点击一下更精彩";
+function speakInvite(){
+  try{
+    if(!("speechSynthesis" in window))return;
+    if(speechSynthesis.speaking||speechSynthesis.pending)return;
+    const u=new SpeechSynthesisUtterance(SAY);
+    u.lang="zh-CN";u.rate=1.0;u.pitch=1.15;
+    const vs=speechSynthesis.getVoices();
+    const v=vs.find(x=>(x.lang||"").toLowerCase().indexOf("zh")===0)||null;
+    if(v)u.voice=v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ========== 背景音乐（免点击自动起播） ========== */
 const AUDIO_URL="https://music.163.com/song/media/outer/url?id=2698807244.mp3";
 const CS=120, CE=200;
 const audio=document.getElementById("bgm");
 audio.src=AUDIO_URL;
-let ready=false,audible=false;
+let ready=false;
 audio.addEventListener("loadedmetadata",()=>{ready=true;try{audio.currentTime=CS;}catch(e){}});
 audio.addEventListener("timeupdate",()=>{
   if(ready&&(audio.currentTime>=CE||audio.currentTime<CS-0.5))audio.currentTime=CS;
 });
-/* 解静音 + 播放；失败则退回静音播放（保持通道） */
 function makeAudible(){
   audio.muted=false;
   const p=audio.play();
-  if(p&&p.catch)p.catch(()=>{          // 被策略拦截 → 退回静音播放
+  if(p&&p.catch)p.catch(()=>{
     audio.muted=true;
     const q=audio.play();
     if(q&&q.catch)q.catch(()=>{});
   });
-  // 稍后确认是否真正有声
   setTimeout(()=>{
-    audible=(!audio.muted&&!audio.paused);
+    const audible=(!audio.muted&&!audio.paused&&audio.currentTime>0);
     refreshBtn();
-    if(audible)document.getElementById("musicTip").classList.add("hide");
+    if(audible){hidePill();document.getElementById("musicTip").classList.add("hide");}
   },150);
 }
 function bootAudio(){
-  audio.muted=true;                     // 静音自动播放：浏览器允许，先建立播放
+  audio.muted=true;
   const p=audio.play();
   if(p&&p.catch)p.catch(()=>{});
-  setTimeout(makeAudible,120);          // 尝试解静音（微信桥/已激活时生效）
+  setTimeout(makeAudible,120);
   setTimeout(makeAudible,600);
   setTimeout(makeAudible,1500);
   setTimeout(makeAudible,3200);
 }
 function refreshBtn(){
   const b=document.getElementById("musicBtn");
-  audible=(!audio.muted&&!audio.paused&&audio.currentTime>0);
-  b.textContent=audible?"\u{1F507}":"\u{1F50A}";
+  b.textContent=(!audio.muted&&!audio.paused&&audio.currentTime>0)?"\u{1F507}":"\u{1F50A}";
 }
 function toggleMusic(){
   if(audio&&!audio.paused&&!audio.muted){audio.pause();refreshBtn();}
-  else makeAudible();                    // 用户手势下必然成功
+  else{makeAudible();hidePill();}
 }
 document.getElementById("musicBtn").addEventListener("click",function(e){
   e.stopPropagation();toggleMusic();
 });
-/* 兜底：首次触碰 → 用户手势，解静音必成功 */
+/* 首次触碰：隐藏提示并解锁 */
 document.addEventListener("pointerdown",function(){
+  hidePill();
   if(audio.paused||audio.muted)makeAudible();
 });
 document.addEventListener("touchstart",function(){
+  hidePill();
   if(audio.paused||audio.muted)makeAudible();
 },{passive:true});
 
@@ -232,13 +275,13 @@ function burst(cx,cy,n){
   for(let i=0;i<n;i++){
     const s=document.createElement("span");
     s.className="burst";s.textContent=pick(BURST_GLYPHS);
-    const a=Math.random()*Math.PI*2,d=rand(90,360);
-    s.style.left=(cx-9)+"px";s.style.top=(cy-9)+"px";
+    const a=Math.random()*Math.PI*2,d=rand(90,420);
+    s.style.left=(cx-10)+"px";s.style.top=(cy-10)+"px";
     s.style.setProperty("--tx",Math.cos(a)*d+"px");
     s.style.setProperty("--ty",Math.sin(a)*d+"px");
-    s.style.fontSize=rand(13,30)+"px";
+    s.style.fontSize=rand(14,34)+"px";
     document.body.appendChild(s);
-    setTimeout(()=>s.remove(),1300);
+    setTimeout(()=>s.remove(),1400);
   }
 }
 function clearAll(){cards.forEach(c=>c.el.remove());cards=[];count=0;}
@@ -260,13 +303,15 @@ function start(){
   const iv=setInterval(()=>{
     if(idx>=N){
       clearInterval(iv);
+      /* 拼心高光：闪屏×3 + 光晕 + 100粒子×3波 + 双段震动 */
+      bigFlash();
       halo.classList.add("on");
       cards.forEach(c=>c.el.classList.add("pulse"));
       vib([60,50,120]);
-      burst(cx,cy,56);
-      setTimeout(()=>burst(cx,cy,56),230);
-      setTimeout(()=>burst(cx,cy,56),460);
-      setTimeout(()=>{vib(80);},480);
+      burst(cx,cy,100);
+      setTimeout(()=>burst(cx,cy,100),240);
+      setTimeout(()=>burst(cx,cy,100),480);
+      setTimeout(()=>{vib(90);},500);
       setTimeout(()=>{
         cards.forEach(c=>c.el.classList.remove("pulse"));
         halo.classList.remove("on");
@@ -315,16 +360,19 @@ function start(){
 window.addEventListener("load",function(){
   start();
   vib(60);
-  bootAudio();               // 静音启动 → 多轮抢解静音
+  bootAudio();
+  /* 语音提醒多时机尝试（能被系统允许时播报） */
+  setTimeout(speakInvite,700);
+  setTimeout(speakInvite,1800);
+  setTimeout(speakInvite,3200);
 });
-/* 微信桥第二道保险 */
-document.addEventListener("WeixinJSBridgeReady",function(){makeAudible();},false);
-/* 回前台再抢一次（扫码后页面切入前台场景） */
+document.addEventListener("WeixinJSBridgeReady",function(){makeAudible();speakInvite();},false);
 document.addEventListener("visibilitychange",function(){
   if(!document.hidden&&(audio.paused||audio.muted))makeAudible();
 });
 document.body.addEventListener("click",function(e){
   if(e.target.id==="musicBtn"||e.target.closest("#musicBtn"))return;
+  hidePill();
   clearAll();running=false;start();
 });
 window.addEventListener("resize",function(){
