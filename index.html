@@ -53,7 +53,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:
   border:1.5px solid rgba(255,255,255,.75);
   opacity:0;transform:scale(.15) rotate(var(--rot0));
   transition:left .95s cubic-bezier(.25,.46,.45,.94),top .95s cubic-bezier(.25,.46,.45,.94),
-             opacity .45s ease,transform .6s cubic-bezier(.22,1.7,.36,1);
+             opacity .5s ease,transform .6s cubic-bezier(.22,1.7,.36,1);
   pointer-events:none;z-index:1;will-change:transform,left,top;
 }
 .card.show{opacity:1;transform:scale(1) rotate(var(--rot0))}
@@ -80,7 +80,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:
   animation:fly 1.3s cubic-bezier(.08,.7,.25,1) forwards}
 @keyframes fly{0%{transform:translate(0,0) scale(.2);opacity:1}
   100%{transform:translate(var(--tx),var(--ty)) scale(2);opacity:0}}
-/* ---- 整屏粉白闪光 ---- */
 #flash{position:fixed;inset:0;z-index:95;pointer-events:none;opacity:0;
   background:radial-gradient(circle at 50% 45%, rgba(255,255,255,.95),
     rgba(255,175,222,.6) 38%, rgba(255,70,160,.16) 72%, transparent 90%)}
@@ -88,7 +87,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:
 @keyframes flashFX{0%{opacity:0;transform:scale(.55)}
   16%{opacity:1;transform:scale(1)}
   100%{opacity:0;transform:scale(1.18)}}
-/* ---- 「点击一下更精彩」提示条 ---- */
 #tapPill{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);z-index:99998;
   padding:11px 24px;border-radius:40px;background:rgba(255,255,255,.12);
   border:1.5px solid rgba(255,190,228,.6);color:#ffd9eb;font-size:15px;font-weight:800;
@@ -98,6 +96,21 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:
 @keyframes pillPulse{0%,100%{transform:translateX(-50%) scale(1);box-shadow:0 0 16px rgba(255,80,160,.4)}
   50%{transform:translateX(-50%) scale(1.09);box-shadow:0 0 40px rgba(255,80,160,.9)}}
 #tapPill.hide{opacity:0;transform:translateX(-50%) scale(.5);transition:opacity .45s,transform .45s;animation:none}
+/* ---- 歌词发光大字收尾 ---- */
+#finale{position:fixed;inset:0;z-index:90;display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:20px;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 60%, rgba(40,10,40,.55), rgba(13,13,26,.25) 70%)}
+.fline{font-size:clamp(21px,5.2vw,42px);font-weight:900;letter-spacing:.14em;white-space:nowrap;
+  background:linear-gradient(100deg,#ffe9f4,#ff7fb0 42%,#ffd2e6 80%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 16px rgba(255,80,150,.85)) drop-shadow(0 3px 8px rgba(0,0,0,.4))}
+.fline .ch{display:inline-block;opacity:0;animation:charPop .6s cubic-bezier(.18,1.5,.4,1) both}
+@keyframes charPop{0%{opacity:0;transform:translateY(26px) scale(.15);filter:blur(8px)}
+  55%{opacity:1;transform:translateY(-4px) scale(1.18);filter:blur(0)}
+  100%{opacity:1;transform:translateY(0) scale(1)}}
+#fsub{margin-top:14px;color:rgba(255,215,235,.62);font-size:clamp(11px,2vw,15px);
+  letter-spacing:.35em;opacity:0;transition:opacity 1.2s ease}
+#fsub.on{opacity:1}
 #hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.5);font-size:12.5px;z-index:9999;pointer-events:none;transition:opacity .6s}
 #hint.hide{opacity:0}
 #musicBtn{position:fixed;bottom:16px;right:16px;z-index:99999;width:46px;height:46px;border-radius:50%;
@@ -117,6 +130,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:
 <div id="bgfx"></div>
 <div id="halo"></div>
 <div id="flash"></div>
+<div id="finale"><div class="fline" id="fl1"></div><div class="fline" id="fl2"></div><div id="fsub"></div></div>
 <audio id="bgm" autoplay muted loop playsinline preload="auto" style="display:none"></audio>
 <div id="brand">❤ 温馨提示 · 万事顺意 ❤</div>
 <div id="tapPill">✨ 点击一下，愿你开心一整天哦 ✨</div>
@@ -147,6 +161,10 @@ const GLOWS=["rgba(255,94,126,.45)","rgba(255,138,92,.4)","rgba(255,210,77,.4)",
 const TOTAL=100;
 const PAUSE_AFTER_HEART=4500;
 const BURST_GLYPHS=["❤","💗","✨","💖","⭐","💕","🌟","💘","💫","🔥"];
+const L1="乌云会离开你的胸膛";
+const L2="岁月会爱你如常";
+const L1DELAY=L1.length*90+450;
+const FINALE_HOLD=5200;
 
 /* ========== 工具 ========== */
 function heartPt(t,s,cx,cy){
@@ -197,6 +215,53 @@ function speakInvite(){
   }catch(e){}
 }
 
+/* ========== 歌词发光收尾 ========== */
+const finale=document.getElementById("finale");
+const fl1=document.getElementById("fl1");
+const fl2=document.getElementById("fl2");
+const fsub=document.getElementById("fsub");
+let finaleT=[];
+function buildChars(el,text){
+  el.innerHTML="";
+  for(let i=0;i<text.length;i++){
+    const sp=document.createElement("span");
+    sp.className="ch";sp.textContent=text[i];
+    sp.style.animationDelay=(i*90)+"ms";
+    el.appendChild(sp);
+  }
+}
+function cancelFinale(){
+  finaleT.forEach(t=>clearTimeout(t));finaleT=[];
+  finale.style.display="none";
+  fl1.innerHTML="";fl2.innerHTML="";fsub.classList.remove("on");
+}
+function showFinale(cx,cy){
+  if(running)return;
+  cancelFinale();
+  finale.style.display="flex";
+  fl2.style.opacity="0";
+  buildChars(fl1,L1);
+  vib(70);
+  flashOnce();
+  burst(cx,cy,46);
+  finaleT.push(setTimeout(function(){
+    fl2.style.opacity="1";
+    buildChars(fl2,L2);
+    flashOnce();vib(90);
+    burst(cx,cy+40,46);
+  },L1DELAY));
+  finaleT.push(setTimeout(function(){
+    fsub.textContent="— 安然无恙 · 愿你永远安然无恙 —";
+    fsub.classList.add("on");
+  },L1DELAY+L2.length*90+500));
+  finaleT.push(setTimeout(function(){
+    finale.style.display="none";
+    fl1.innerHTML="";fl2.innerHTML="";fsub.classList.remove("on");
+    finaleT=[];
+    if(!running){clearAll();start();}
+  },L1DELAY+L2.length*90+FINALE_HOLD));
+}
+
 /* ========== 背景音乐（免点击自动起播） ========== */
 const AUDIO_URL="https://music.163.com/song/media/outer/url?id=2698807244.mp3";
 const CS=120, CE=200;
@@ -241,7 +306,6 @@ function toggleMusic(){
 document.getElementById("musicBtn").addEventListener("click",function(e){
   e.stopPropagation();toggleMusic();
 });
-/* 首次触碰：隐藏提示并解锁 */
 document.addEventListener("pointerdown",function(){
   hidePill();
   if(audio.paused||audio.muted)makeAudible();
@@ -284,10 +348,16 @@ function burst(cx,cy,n){
     setTimeout(()=>s.remove(),1400);
   }
 }
-function clearAll(){cards.forEach(c=>c.el.remove());cards=[];count=0;}
+function clearAll(){
+  cards.forEach(c=>c.el.remove());cards=[];count=0;
+  finaleT.forEach(t=>clearTimeout(t));finaleT=[];
+  finale.style.display="none";
+  fl1.innerHTML="";fl2.innerHTML="";fsub.classList.remove("on");
+}
 
 function start(){
   if(running)return;running=true;
+  cancelFinale();
   clearAll();
   const w=W(),h=H(),cx=w/2,cy=h/2-8;
   const s=Math.min(w,h)/42;
@@ -303,7 +373,6 @@ function start(){
   const iv=setInterval(()=>{
     if(idx>=N){
       clearInterval(iv);
-      /* 拼心高光：闪屏×3 + 光晕 + 100粒子×3波 + 双段震动 */
       bigFlash();
       halo.classList.add("on");
       cards.forEach(c=>c.el.classList.add("pulse"));
@@ -339,9 +408,14 @@ function start(){
     let added=cards.length;
     const av=setInterval(()=>{
       if(added>=TOTAL){
-        clearInterval(av);running=false;hint.classList.remove("hide");
-        clearTimeout(window.__auto);
-        window.__auto=setTimeout(()=>{if(!running){clearAll();start();}},6500);
+        clearInterval(av);running=false;
+        /* 散开结束 → 卡片淡出 → 歌词发光收尾 → 自动重播 */
+        setTimeout(()=>{
+          cards.forEach(c=>c.el.style.opacity="0");
+          setTimeout(()=>{
+            if(!running){clearAll();showFinale(w/2,h*0.42);}
+          },520);
+        },1600);
         return;
       }
       const rx=rand(8,w-190),ry=rand(8,h-96);count++;
@@ -361,7 +435,6 @@ window.addEventListener("load",function(){
   start();
   vib(60);
   bootAudio();
-  /* 语音提醒多时机尝试（能被系统允许时播报） */
   setTimeout(speakInvite,700);
   setTimeout(speakInvite,1800);
   setTimeout(speakInvite,3200);
@@ -373,10 +446,11 @@ document.addEventListener("visibilitychange",function(){
 document.body.addEventListener("click",function(e){
   if(e.target.id==="musicBtn"||e.target.closest("#musicBtn"))return;
   hidePill();
+  cancelFinale();
   clearAll();running=false;start();
 });
 window.addEventListener("resize",function(){
-  if(!running){clearAll();start();}
+  if(!running){cancelFinale();clearAll();start();}
 });
 </script>
 </body>
