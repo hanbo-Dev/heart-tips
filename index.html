@@ -96,6 +96,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:
 @keyframes pillPulse{0%,100%{transform:translateX(-50%) scale(1);box-shadow:0 0 16px rgba(255,80,160,.4)}
   50%{transform:translateX(-50%) scale(1.09);box-shadow:0 0 40px rgba(255,80,160,.9)}}
 #tapPill.hide{opacity:0;transform:translateX(-50%) scale(.5);transition:opacity .45s,transform .45s;animation:none}
+/* ---- 星光层（晚霞照片上眨眼） ---- */
+#stars{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1}
+.star{position:absolute;color:#fff;line-height:1;opacity:0;
+  text-shadow:0 0 8px rgba(255,255,255,.95),0 0 18px rgba(255,225,190,.6),0 0 30px rgba(255,200,160,.35);
+  animation:twinkle var(--d,3s) ease-in-out var(--delay,0s) infinite}
+@keyframes twinkle{0%,100%{opacity:0;transform:scale(.4) rotate(0deg)}
+  50%{opacity:var(--max,.9);transform:scale(1) rotate(20deg)}}
 /* ---- 歌词发光大字收尾（实拍日落照片背景） ---- */
 #finale{position:fixed;inset:0;z-index:90;display:none;flex-direction:column;
   align-items:center;justify-content:center;gap:30px;pointer-events:none;overflow:hidden;
@@ -143,7 +150,7 @@ body.shake{animation:shakeS .55s linear}
 <div id="bgfx"></div>
 <div id="halo"></div>
 <div id="flash"></div>
-<div id="finale"><div class="fline" id="fl1"></div><div class="fline" id="fl2"></div><div id="fsub"></div></div>
+<div id="finale"><div id="stars"></div><div class="fline" id="fl1"></div><div class="fline" id="fl2"></div><div id="fsub"></div></div>
 <audio id="bgm" autoplay muted loop playsinline preload="auto" style="display:none"></audio>
 <div id="brand">❤ 温馨提示 · 万事顺意 ❤</div>
 <div id="tapPill">✨ 点击一下，愿你开心一整天哦 ✨</div>
@@ -201,6 +208,26 @@ function vib(pattern){try{if(navigator.vibrate)navigator.vibrate(pattern);}catch
     s.style.animationDelay=(-rand(0,24))+"s";
     s.style.setProperty("--sway",rand(-6,6)+"vw");
     document.body.appendChild(s);
+  }
+})();
+
+/* ========== 收尾星光层（照片天空上的眨眼星星） ========== */
+(function(){
+  const box=document.getElementById("stars");
+  if(!box)return;
+  const chars=["\u2726","\u2727","\u22C6","\u00B7","\u2726"];
+  const cols=["#ffffff","#fff3d6","#dce8ff","#ffe9c2","#fff8ea"];
+  for(let i=0;i<30;i++){
+    const s=document.createElement("span");
+    s.className="star";s.textContent=chars[Math.floor(Math.random()*chars.length)];
+    s.style.left=rand(0,100)+"%";
+    s.style.top=rand(2,64)+"%";
+    s.style.color=cols[Math.floor(Math.random()*cols.length)];
+    s.style.fontSize=rand(8,19)+"px";
+    s.style.setProperty("--d",rand(2.2,5.5)+"s");
+    s.style.setProperty("--delay",(-rand(0,6))+"s");
+    s.style.setProperty("--max",rand(.6,1).toFixed(2));
+    box.appendChild(s);
   }
 })();
 
