@@ -99,6 +99,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:
 /* ---- 歌词发光大字收尾（全屏视觉冲击） ---- */
 #finale{position:fixed;inset:0;z-index:90;display:none;flex-direction:column;
   align-items:center;justify-content:center;gap:30px;pointer-events:none;overflow:hidden;
+  perspective:900px;
   background:radial-gradient(ellipse at 50% 55%, rgba(52,10,52,.7), rgba(13,13,26,.35) 75%)}
 #beams{position:absolute;left:50%;top:50%;width:160vmax;height:160vmax;
   transform:translate(-50%,-50%);opacity:.5;filter:blur(6px);pointer-events:none;
@@ -106,13 +107,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:
     rgba(255,80,160,.04) 5deg 14deg,transparent 14deg 30deg);
   animation:beamsRot 12s linear infinite}
 @keyframes beamsRot{0%{transform:translate(-50%,-50%) rotate(0)}100%{transform:translate(-50%,-50%) rotate(360deg)}}
-.ring{position:absolute;left:50%;top:50%;width:42vmin;height:42vmin;
-  margin:-21vmin 0 0 -21vmin;border-radius:50%;
-  border:3px solid rgba(255,160,215,.95);box-shadow:0 0 30px rgba(255,90,170,.8),inset 0 0 24px rgba(255,120,190,.5);
-  opacity:0;pointer-events:none}
-.ring.go{animation:ringFX .95s ease-out forwards}
-@keyframes ringFX{0%{transform:scale(.18);opacity:1}
-  100%{transform:scale(5.5);opacity:0}}
+/* 双色 3D 冲击环：粉环 + 青蓝环，以 74° 立体倾斜向外扩散 */
+.ring{position:absolute;left:50%;top:50%;width:30vmin;height:30vmin;
+  margin:-15vmin 0 0 -15vmin;pointer-events:none;transform-style:preserve-3d}
+.ring .rp,.ring .rb{position:absolute;border-radius:50%;opacity:0;
+  animation-fill-mode:both}
+.ring .rp{inset:-3px;border:3.5px solid rgba(255,120,195,.95);
+  box-shadow:0 0 30px rgba(255,90,175,.95),inset 0 0 22px rgba(255,140,205,.6);
+  animation:ringA 1.05s cubic-bezier(.1,.75,.3,1) both}
+.ring .rb{inset:-11px;border:3.5px solid rgba(120,195,255,.92);
+  box-shadow:0 0 34px rgba(90,175,255,.85),inset 0 0 26px rgba(150,210,255,.55);
+  animation:ringB 1.05s .16s cubic-bezier(.1,.75,.3,1) both}
+@keyframes ringA{0%{opacity:0;transform:rotateX(74deg) scale(.1)}
+  12%{opacity:1;transform:rotateX(74deg) scale(.3)}
+  100%{opacity:0;transform:rotateX(74deg) scale(4.4)}}
+@keyframes ringB{0%{opacity:0;transform:rotateX(74deg) scale(.2)}
+  12%{opacity:1;transform:rotateX(74deg) scale(.45)}
+  100%{opacity:0;transform:rotateX(74deg) scale(5.4)}}
 body.shake{animation:shakeS .55s linear}
 @keyframes shakeS{0%,100%{transform:translate(0,0)}
   15%{transform:translate(-12px,7px)}30%{transform:translate(10px,-9px)}
@@ -126,10 +137,10 @@ body.shake{animation:shakeS .55s linear}
 @keyframes glowPulse{0%,100%{text-shadow:0 0 12px rgba(255,120,180,1),0 0 32px rgba(255,70,155,.9),0 0 70px rgba(255,40,140,.65),0 4px 14px rgba(0,0,0,.5)}
   50%{text-shadow:0 0 20px rgba(255,150,200,1),0 0 60px rgba(255,80,170,1),0 0 110px rgba(255,50,150,.9),0 4px 14px rgba(0,0,0,.5)}}
 .fline .ch{display:inline-block;opacity:0;color:#ffe9f3;
-  animation:charPop .65s cubic-bezier(.16,1.45,.4,1) both}
-@keyframes charPop{0%{opacity:0;transform:translateY(60px) scale(.05) rotate(-8deg)}
-  55%{opacity:1;transform:translateY(-6px) scale(1.22) rotate(2deg)}
-  100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
+  animation:charPop .7s cubic-bezier(.16,1.4,.4,1) both}
+@keyframes charPop{0%{opacity:0;transform:translateY(90px) rotateY(85deg) scale(.1)}
+  55%{opacity:1;transform:translateY(-8px) rotateY(-8deg) scale(1.22)}
+  100%{opacity:1;transform:translateY(0) rotateY(0) scale(1)}}
 #fsub{margin-top:22px;color:rgba(255,232,244,.92);font-size:clamp(13px,2.4vw,18px);
   font-weight:600;letter-spacing:.5em;opacity:0;transition:opacity 1.4s ease;
   text-shadow:0 0 18px rgba(255,90,160,.85),0 0 40px rgba(255,60,140,.5)}
@@ -261,9 +272,9 @@ function cancelFinale(){
 function spawnRing(){
   const r=document.createElement("div");
   r.className="ring";
+  r.innerHTML="<i class='rp'></i><i class='rb'></i>";
   finale.appendChild(r);
-  requestAnimationFrame(()=>requestAnimationFrame(()=>r.classList.add("go")));
-  setTimeout(()=>r.remove(),1100);
+  setTimeout(()=>r.remove(),1500);
 }
 /* 全屏冲击：闪光 + 冲击波环 + 漫天粒子 + 震动 + 屏幕抖动 */
 function impact(x,y,big){
