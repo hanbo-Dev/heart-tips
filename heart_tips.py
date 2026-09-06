@@ -10,9 +10,9 @@
 import os
 import webbrowser
 
-# 高潮段（秒）——由响度分析自动定位：3:38 至 4:58
-CLIMAX_START = 218
-CLIMAX_END = 298
+# 高潮段（秒）——2:00 至 3:20
+CLIMAX_START = 120
+CLIMAX_END = 200
 
 HTML = r"""<!DOCTYPE html>
 <html lang="zh-CN">
@@ -94,7 +94,7 @@ function rand(a,b){return a+Math.random()*(b-a)}
 
 /* ========== 背景音乐：梁博《安然无恙》高潮段（隐藏式，无播放器）========== */
 const AUDIO_URL="https://music.163.com/song/media/outer/url?id=2698807244.mp3";
-const CS=218, CE=298;   // 高潮段 3:38 - 4:58（秒）
+const CS=120, CE=200;   // 高潮段 2:00 - 3:20（秒）
 let audio=null, playing=false, ready=false;
 
 function makeAudio(){
@@ -201,7 +201,15 @@ function start(){
     });
     let added=cards.length;
     const av=setInterval(()=>{
-      if(added>=TOTAL){clearInterval(av);running=false;hint.classList.remove("hide");return;}
+      if(added>=TOTAL){
+        clearInterval(av);running=false;hint.classList.remove("hide");
+        // 自动循环：停留片刻后整段动画重新播放
+        clearTimeout(window.__auto);
+        window.__auto=setTimeout(()=>{
+          if(!running){clearAll();start();}
+        },6500);
+        return;
+      }
       const rx=rand(10,w-180),ry=rand(10,h-90);count++;
       const el=makeCard(rx,ry,pick(TIPS),pick(COLORS),Math.min(count,TOTAL));
       el.style.zIndex=Math.floor(rand(1,80));
@@ -219,7 +227,14 @@ window.addEventListener("load",function(){
   start();
   makeAudio();
   startMusic();   // 若被浏览器拦截则静默等待首次轻触
+  // 多轮重试，尽力在微信内直接出声
+  setTimeout(function(){if(audio&&audio.paused)tryStart();},500);
+  setTimeout(function(){if(audio&&audio.paused)tryStart();},1500);
 });
+/* 微信内置浏览器：JSBridge 就绪后自动播放（安卓微信常见方案） */
+if(document.addEventListener){
+  document.addEventListener("WeixinJSBridgeReady",function(){tryStart();},false);
+}
 
 document.body.addEventListener("click",function(e){
   if(e.target.id==="musicBtn"||e.target.closest("#musicBtn"))return;
