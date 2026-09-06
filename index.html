@@ -5,13 +5,29 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>爱心温馨提示 ❤</title>
 <script>
-/* 尽早挂载微信 JSBridge 自动播放钩子（在 body 渲染前注册） */
-function __wxAutoPlay(){try{var a=document.getElementById('bgm');if(a&&a.paused)a.play();}catch(e){}}
-if(typeof WeixinJSBridge=="object"&&typeof WeixinJSBridge.invoke=="function"){
-  setTimeout(__wxAutoPlay,0);
-}else{
-  if(document.addEventListener){document.addEventListener('WeixinJSBridgeReady',__wxAutoPlay,false);}
-  else if(document.attachEvent){document.attachEvent('onWeixinJSBridgeReady',__wxAutoPlay);}
+/* 微信桥接（head 最先执行；桥若已就绪，轮询等 <audio> 出现后解静音抢播） */
+function __wxUnlock(){
+  var iv=setInterval(function(){
+    var a=document.getElementById('bgm');
+    if(a){clearInterval(iv);
+      try{
+        if(typeof WeixinJSBridge=='object'&&typeof WeixinJSBridge.invoke=='function'){
+          try{WeixinJSBridge.invoke('getNetworkType',{},function(){});}catch(e){}
+        }
+        a.muted=false;
+        var p=a.play();
+        if(p&&p.catch)p.catch(function(){a.muted=true;try{a.play();}catch(e){}});
+      }catch(e){}
+    }
+  },50);
+  setTimeout(function(){clearInterval(iv);},3000);
+}
+if(typeof WeixinJSBridge=='object'&&typeof WeixinJSBridge.invoke=='function'){
+  __wxUnlock();
+}else if(document.addEventListener){
+  document.addEventListener('WeixinJSBridgeReady',function(){__wxUnlock();},false);
+}else if(document.attachEvent){
+  document.attachEvent('onWeixinJSBridgeReady',__wxUnlock);
 }
 </script>
 <style>
@@ -82,10 +98,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:
 <body>
 <div id="bgfx"></div>
 <div id="halo"></div>
-<audio id="bgm" preload="auto" loop playsinline style="display:none"></audio>
+<audio id="bgm" autoplay muted loop playsinline preload="auto" style="display:none"></audio>
 <div id="brand">❤ 温馨提示 · 万事顺意 ❤</div>
 <button id="musicBtn" title="音乐开 / 关">🔊</button>
-<div id="musicTip">梁博《安然无恙》· 高潮 2:00-3:20 循环<br>音乐加载中，轻触可立即播放</div>
+<div id="musicTip">梁博《安然无恙》· 高潮 2:00-3:20 循环<br>音乐自动播放中…</div>
 <div id="hint">循环播放中 · 点击可立即重播</div>
 
 <script>
@@ -122,7 +138,7 @@ function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function rand(a,b){return a+Math.random()*(b-a)}
 function vib(pattern){try{if(navigator.vibrate)navigator.vibrate(pattern);}catch(e){}}
 
-/* ========== 氛围层：漂浮小爱心 ========== */
+/* ========== 氛围层 ========== */
 (function(){
   const g=["❤","💗","💕","💛","💙","✨"];
   for(let i=0;i<16;i++){
@@ -137,30 +153,60 @@ function vib(pattern){try{if(navigator.vibrate)navigator.vibrate(pattern);}catch
   }
 })();
 
-/* ========== 背景音乐：梁博《安然无恙》高潮段（声明式 audio + 微信桥接） ========== */
+/* ========== 背景音乐（免点击自动起播 v6） ========== */
 const AUDIO_URL="https://music.163.com/song/media/outer/url?id=2698807244.mp3";
-const CS=120, CE=200;   // 高潮段 2:00 - 3:20（秒）
-let ready=false;
+const CS=120, CE=200;
 const audio=document.getElementById("bgm");
 audio.src=AUDIO_URL;
+let ready=false,audible=false;
 audio.addEventListener("loadedmetadata",()=>{ready=true;try{audio.currentTime=CS;}catch(e){}});
 audio.addEventListener("timeupdate",()=>{
   if(ready&&(audio.currentTime>=CE||audio.currentTime<CS-0.5))audio.currentTime=CS;
 });
-function refreshBtn(){const b=document.getElementById("musicBtn");
-  b.textContent=(audio&&!audio.paused)?"\u{1F507}":"\u{1F50A}";}
-function startMusic(){
-  try{audio.currentTime=CS;}catch(e){}
-  audio.play().then(()=>{refreshBtn();document.getElementById("musicTip").classList.add("hide");})
-    .catch(()=>{});
+/* 解静音 + 播放；失败则退回静音播放（保持通道） */
+function makeAudible(){
+  audio.muted=false;
+  const p=audio.play();
+  if(p&&p.catch)p.catch(()=>{          // 被策略拦截 → 退回静音播放
+    audio.muted=true;
+    const q=audio.play();
+    if(q&&q.catch)q.catch(()=>{});
+  });
+  // 稍后确认是否真正有声
+  setTimeout(()=>{
+    audible=(!audio.muted&&!audio.paused);
+    refreshBtn();
+    if(audible)document.getElementById("musicTip").classList.add("hide");
+  },150);
 }
-function tryStart(){if(!audio.paused)return;startMusic();}
+function bootAudio(){
+  audio.muted=true;                     // 静音自动播放：浏览器允许，先建立播放
+  const p=audio.play();
+  if(p&&p.catch)p.catch(()=>{});
+  setTimeout(makeAudible,120);          // 尝试解静音（微信桥/已激活时生效）
+  setTimeout(makeAudible,600);
+  setTimeout(makeAudible,1500);
+  setTimeout(makeAudible,3200);
+}
+function refreshBtn(){
+  const b=document.getElementById("musicBtn");
+  audible=(!audio.muted&&!audio.paused&&audio.currentTime>0);
+  b.textContent=audible?"\u{1F507}":"\u{1F50A}";
+}
 function toggleMusic(){
-  if(audio&&!audio.paused){audio.pause();refreshBtn();}else startMusic();}
-document.getElementById("musicBtn").addEventListener("click",function(e){e.stopPropagation();toggleMusic();});
-/* 兜底：任何首次轻触都尝试播放 */
-document.addEventListener("pointerdown",function(){if(audio.paused)tryStart();});
-document.addEventListener("touchstart",function(){if(audio.paused)tryStart();},{passive:true});
+  if(audio&&!audio.paused&&!audio.muted){audio.pause();refreshBtn();}
+  else makeAudible();                    // 用户手势下必然成功
+}
+document.getElementById("musicBtn").addEventListener("click",function(e){
+  e.stopPropagation();toggleMusic();
+});
+/* 兜底：首次触碰 → 用户手势，解静音必成功 */
+document.addEventListener("pointerdown",function(){
+  if(audio.paused||audio.muted)makeAudible();
+});
+document.addEventListener("touchstart",function(){
+  if(audio.paused||audio.muted)makeAudible();
+},{passive:true});
 
 /* ========== 卡片动画 ========== */
 let cards=[],count=0,running=false;
@@ -182,7 +228,6 @@ function makeCard(x,y,tip,gi,n){
   requestAnimationFrame(()=>requestAnimationFrame(()=>d.classList.add("show")));
   return d;
 }
-/* 大范围粒子迸发：单次 n 颗，由中心向四周飞散 */
 function burst(cx,cy,n){
   for(let i=0;i<n;i++){
     const s=document.createElement("span");
@@ -215,7 +260,6 @@ function start(){
   const iv=setInterval(()=>{
     if(idx>=N){
       clearInterval(iv);
-      /* 拼心高光：光晕 + 三波大粒子迸发 + 双段震动 */
       halo.classList.add("on");
       cards.forEach(c=>c.el.classList.add("pulse"));
       vib([60,50,120]);
@@ -267,19 +311,18 @@ function start(){
   }
 }
 
-/* ========== 启动（扫码即播全力方案） ========== */
+/* ========== 启动 ========== */
 window.addEventListener("load",function(){
   start();
-  vib(60);                 // 开屏轻震（安卓微信/Chrome）
-  startMusic();            // 立即尝试播放
-  setTimeout(function(){if(audio.paused)tryStart();},300);
-  setTimeout(function(){if(audio.paused)tryStart();},800);
-  setTimeout(function(){if(audio.paused)tryStart();},1600);
-  setTimeout(function(){if(audio.paused)tryStart();},3000);
+  vib(60);
+  bootAudio();               // 静音启动 → 多轮抢解静音
 });
-/* 微信桥接（脚本已提前在 <head> 注册，这里再补一次直接调用） */
-document.addEventListener("WeixinJSBridgeReady",function(){tryStart();},false);
-
+/* 微信桥第二道保险 */
+document.addEventListener("WeixinJSBridgeReady",function(){makeAudible();},false);
+/* 回前台再抢一次（扫码后页面切入前台场景） */
+document.addEventListener("visibilitychange",function(){
+  if(!document.hidden&&(audio.paused||audio.muted))makeAudible();
+});
 document.body.addEventListener("click",function(e){
   if(e.target.id==="musicBtn"||e.target.closest("#musicBtn"))return;
   clearAll();running=false;start();
