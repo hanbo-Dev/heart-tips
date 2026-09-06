@@ -96,20 +96,22 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:
 @keyframes pillPulse{0%,100%{transform:translateX(-50%) scale(1);box-shadow:0 0 16px rgba(255,80,160,.4)}
   50%{transform:translateX(-50%) scale(1.09);box-shadow:0 0 40px rgba(255,80,160,.9)}}
 #tapPill.hide{opacity:0;transform:translateX(-50%) scale(.5);transition:opacity .45s,transform .45s;animation:none}
-/* ---- 歌词发光大字收尾 ---- */
+/* ---- 歌词发光大字收尾（实色发光，兼容各内核） ---- */
 #finale{position:fixed;inset:0;z-index:90;display:none;flex-direction:column;
-  align-items:center;justify-content:center;gap:20px;pointer-events:none;
-  background:radial-gradient(ellipse at 50% 60%, rgba(40,10,40,.55), rgba(13,13,26,.25) 70%)}
-.fline{font-size:clamp(21px,5.2vw,42px);font-weight:900;letter-spacing:.14em;white-space:nowrap;
-  background:linear-gradient(100deg,#ffe9f4,#ff7fb0 42%,#ffd2e6 80%);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 0 16px rgba(255,80,150,.85)) drop-shadow(0 3px 8px rgba(0,0,0,.4))}
-.fline .ch{display:inline-block;opacity:0;animation:charPop .6s cubic-bezier(.18,1.5,.4,1) both}
-@keyframes charPop{0%{opacity:0;transform:translateY(26px) scale(.15);filter:blur(8px)}
-  55%{opacity:1;transform:translateY(-4px) scale(1.18);filter:blur(0)}
+  align-items:center;justify-content:center;gap:22px;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 60%, rgba(46,12,46,.6), rgba(13,13,26,.3) 70%)}
+.fline{font-size:clamp(22px,5.4vw,44px);font-weight:900;letter-spacing:.14em;white-space:nowrap;
+  color:#ffe4f0;transition:opacity .5s ease;
+  text-shadow:0 0 10px rgba(255,110,175,.95),0 0 26px rgba(255,70,150,.75),
+             0 0 52px rgba(255,50,140,.5),0 3px 10px rgba(0,0,0,.45)}
+.fline .ch{display:inline-block;opacity:0;color:#ffe4f0;
+  animation:charPop .6s cubic-bezier(.18,1.5,.4,1) both}
+@keyframes charPop{0%{opacity:0;transform:translateY(28px) scale(.15)}
+  55%{opacity:1;transform:translateY(-4px) scale(1.16)}
   100%{opacity:1;transform:translateY(0) scale(1)}}
-#fsub{margin-top:14px;color:rgba(255,215,235,.62);font-size:clamp(11px,2vw,15px);
-  letter-spacing:.35em;opacity:0;transition:opacity 1.2s ease}
+#fsub{margin-top:16px;color:rgba(255,228,242,.85);font-size:clamp(12px,2.1vw,16px);
+  font-weight:600;letter-spacing:.4em;opacity:0;transition:opacity 1.2s ease;
+  text-shadow:0 0 14px rgba(255,90,160,.7)}
 #fsub.on{opacity:1}
 #hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.5);font-size:12.5px;z-index:9999;pointer-events:none;transition:opacity .6s}
 #hint.hide{opacity:0}
