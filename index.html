@@ -4,10 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>爱心温馨提示 ❤</title>
+<script>
+/* 尽早挂载微信 JSBridge 自动播放钩子（在 body 渲染前注册） */
+function __wxAutoPlay(){try{var a=document.getElementById('bgm');if(a&&a.paused)a.play();}catch(e){}}
+if(typeof WeixinJSBridge=="object"&&typeof WeixinJSBridge.invoke=="function"){
+  setTimeout(__wxAutoPlay,0);
+}else{
+  if(document.addEventListener){document.addEventListener('WeixinJSBridgeReady',__wxAutoPlay,false);}
+  else if(document.attachEvent){document.attachEvent('onWeixinJSBridgeReady',__wxAutoPlay);}
+}
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:-apple-system,"PingFang SC","Microsoft YaHei","Helvetica Neue",sans-serif}
-/* ---- 流光渐变背景 ---- */
 #bgfx{position:fixed;inset:0;z-index:0;pointer-events:none;
   background:
     radial-gradient(620px 620px at 18% 16%, rgba(255,80,140,.20), transparent 62%),
@@ -16,14 +25,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:
   animation:bgmove 16s ease-in-out infinite alternate;}
 @keyframes bgmove{0%{transform:scale(1) translate(0,0);opacity:.75}
   100%{transform:scale(1.18) translate(-1.5%,-2%);opacity:1}}
-/* ---- 漂浮小爱心 ---- */
 .fh{position:fixed;bottom:-60px;z-index:0;opacity:.15;pointer-events:none;
   animation:floatUp linear infinite;will-change:transform;filter:saturate(1.2)}
 @keyframes floatUp{
   0%{transform:translateY(0) translateX(0) rotate(0)}
   50%{transform:translateY(-55vh) translateX(var(--sway)) rotate(22deg)}
   100%{transform:translateY(-118vh) translateX(calc(var(--sway)*-1)) rotate(-14deg)}}
-/* ---- 卡片 ---- */
 .card{
   position:absolute;min-width:136px;max-width:196px;border-radius:13px;
   box-shadow:0 12px 28px rgba(0,0,0,.42),0 0 20px var(--glow);
@@ -46,7 +53,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:
 .title-text{margin-left:6px;letter-spacing:.4px}
 .body{padding:13px 15px;font-size:15.5px;font-weight:800;color:#4a0d28;text-align:center;line-height:1.45;
   text-shadow:0 1px 1px rgba(255,255,255,.35)}
-/* ---- 心形光晕 ---- */
 #halo{position:fixed;left:50%;top:50%;z-index:0;pointer-events:none;border-radius:50%;
   background:radial-gradient(circle,rgba(255,120,170,.55) 0%,rgba(255,60,120,.28) 35%,transparent 70%);
   opacity:0;transform:translate(-50%,-50%) scale(.3);
@@ -54,12 +60,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:
 #halo.on{opacity:1;animation:haloBeat 1.15s ease-in-out infinite}
 @keyframes haloBeat{0%,100%{transform:translate(-50%,-50%) scale(1)}
   50%{transform:translate(-50%,-50%) scale(1.12)}}
-/* ---- 迸发粒子 ---- */
 .burst{position:absolute;z-index:50;pointer-events:none;font-size:15px;
-  animation:fly 1.15s cubic-bezier(.08,.7,.25,1) forwards}
+  animation:fly 1.2s cubic-bezier(.08,.7,.25,1) forwards}
 @keyframes fly{0%{transform:translate(0,0) scale(.25);opacity:1}
-  100%{transform:translate(var(--tx),var(--ty)) scale(1.7);opacity:0}}
-/* ---- 控件 ---- */
+  100%{transform:translate(var(--tx),var(--ty)) scale(1.8);opacity:0}}
 #hint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.5);font-size:12.5px;z-index:9999;pointer-events:none;transition:opacity .6s}
 #hint.hide{opacity:0}
 #musicBtn{position:fixed;bottom:16px;right:16px;z-index:99999;width:46px;height:46px;border-radius:50%;
@@ -78,13 +82,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0d0d1a;font-family:
 <body>
 <div id="bgfx"></div>
 <div id="halo"></div>
+<audio id="bgm" preload="auto" loop playsinline style="display:none"></audio>
 <div id="brand">❤ 温馨提示 · 万事顺意 ❤</div>
 <button id="musicBtn" title="音乐开 / 关">🔊</button>
-<div id="musicTip">梁博《安然无恙》· 高潮 2:00-3:20 循环<br>轻触屏幕任意处开始播放</div>
+<div id="musicTip">梁博《安然无恙》· 高潮 2:00-3:20 循环<br>音乐加载中，轻触可立即播放</div>
 <div id="hint">循环播放中 · 点击可立即重播</div>
 
 <script>
-/* ========== 文案 & 配色（高饱和双色渐变） ========== */
+/* ========== 文案 & 配色 ========== */
 const TIPS=[
   "多喝水呀~","保持好心情","好好爱自己","前程似锦","梦想成真",
   "早点休息","别熬夜","要健康","好运连连","暴富发财",
@@ -105,9 +110,9 @@ const GLOWS=["rgba(255,94,126,.45)","rgba(255,138,92,.4)","rgba(255,210,77,.4)",
   "rgba(233,168,255,.42)","rgba(111,168,220,.4)","rgba(255,209,102,.4)","rgba(242,160,168,.4)"];
 const TOTAL=100;
 const PAUSE_AFTER_HEART=4500;
-const BURST_GLYPHS=["❤","💗","✨","💖","⭐","💕","🌟","💘"];
+const BURST_GLYPHS=["❤","💗","✨","💖","⭐","💕","🌟","💘","💫","🔥"];
 
-/* ========== 爱心参数方程 ========== */
+/* ========== 工具 ========== */
 function heartPt(t,s,cx,cy){
   const x=16*Math.pow(Math.sin(t),3);
   const y=-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));
@@ -115,6 +120,7 @@ function heartPt(t,s,cx,cy){
 }
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function rand(a,b){return a+Math.random()*(b-a)}
+function vib(pattern){try{if(navigator.vibrate)navigator.vibrate(pattern);}catch(e){}}
 
 /* ========== 氛围层：漂浮小爱心 ========== */
 (function(){
@@ -131,34 +137,30 @@ function rand(a,b){return a+Math.random()*(b-a)}
   }
 })();
 
-/* ========== 背景音乐：梁博《安然无恙》高潮段（隐藏式） ========== */
+/* ========== 背景音乐：梁博《安然无恙》高潮段（声明式 audio + 微信桥接） ========== */
 const AUDIO_URL="https://music.163.com/song/media/outer/url?id=2698807244.mp3";
 const CS=120, CE=200;   // 高潮段 2:00 - 3:20（秒）
-let audio=null,ready=false;
-function makeAudio(){
-  if(audio)return audio;
-  audio=new Audio();
-  audio.src=AUDIO_URL;audio.preload="auto";
-  audio.addEventListener("loadedmetadata",()=>{ready=true;try{audio.currentTime=CS;}catch(e){}});
-  audio.addEventListener("timeupdate",()=>{
-    if(ready&&(audio.currentTime>=CE||audio.currentTime<CS-0.5))audio.currentTime=CS;
-  });
-  return audio;
-}
+let ready=false;
+const audio=document.getElementById("bgm");
+audio.src=AUDIO_URL;
+audio.addEventListener("loadedmetadata",()=>{ready=true;try{audio.currentTime=CS;}catch(e){}});
+audio.addEventListener("timeupdate",()=>{
+  if(ready&&(audio.currentTime>=CE||audio.currentTime<CS-0.5))audio.currentTime=CS;
+});
 function refreshBtn(){const b=document.getElementById("musicBtn");
   b.textContent=(audio&&!audio.paused)?"\u{1F507}":"\u{1F50A}";}
 function startMusic(){
-  makeAudio();
   try{audio.currentTime=CS;}catch(e){}
   audio.play().then(()=>{refreshBtn();document.getElementById("musicTip").classList.add("hide");})
     .catch(()=>{});
 }
-function tryStart(){if(audio&&!audio.paused)return;startMusic();}
-function toggleMusic(){makeAudio();
+function tryStart(){if(!audio.paused)return;startMusic();}
+function toggleMusic(){
   if(audio&&!audio.paused){audio.pause();refreshBtn();}else startMusic();}
 document.getElementById("musicBtn").addEventListener("click",function(e){e.stopPropagation();toggleMusic();});
-document.addEventListener("pointerdown",function(){if(!audio||audio.paused)tryStart();});
-document.addEventListener("touchstart",function(){if(!audio||audio.paused)tryStart();},{passive:true});
+/* 兜底：任何首次轻触都尝试播放 */
+document.addEventListener("pointerdown",function(){if(audio.paused)tryStart();});
+document.addEventListener("touchstart",function(){if(audio.paused)tryStart();},{passive:true});
 
 /* ========== 卡片动画 ========== */
 let cards=[],count=0,running=false;
@@ -180,18 +182,18 @@ function makeCard(x,y,tip,gi,n){
   requestAnimationFrame(()=>requestAnimationFrame(()=>d.classList.add("show")));
   return d;
 }
-function burst(cx,cy){
-  const n=26;
+/* 大范围粒子迸发：单次 n 颗，由中心向四周飞散 */
+function burst(cx,cy,n){
   for(let i=0;i<n;i++){
     const s=document.createElement("span");
     s.className="burst";s.textContent=pick(BURST_GLYPHS);
-    const a=Math.random()*Math.PI*2,d=rand(70,240);
-    s.style.left=(cx-8)+"px";s.style.top=(cy-8)+"px";
+    const a=Math.random()*Math.PI*2,d=rand(90,360);
+    s.style.left=(cx-9)+"px";s.style.top=(cy-9)+"px";
     s.style.setProperty("--tx",Math.cos(a)*d+"px");
     s.style.setProperty("--ty",Math.sin(a)*d+"px");
-    s.style.fontSize=rand(13,26)+"px";
+    s.style.fontSize=rand(13,30)+"px";
     document.body.appendChild(s);
-    setTimeout(()=>s.remove(),1250);
+    setTimeout(()=>s.remove(),1300);
   }
 }
 function clearAll(){cards.forEach(c=>c.el.remove());cards=[];count=0;}
@@ -213,11 +215,14 @@ function start(){
   const iv=setInterval(()=>{
     if(idx>=N){
       clearInterval(iv);
-      /* 心形完成：光晕脉动 + 粒子迸发 + 卡片同频跳动 */
+      /* 拼心高光：光晕 + 三波大粒子迸发 + 双段震动 */
       halo.classList.add("on");
       cards.forEach(c=>c.el.classList.add("pulse"));
-      burst(cx,cy);
-      setTimeout(()=>burst(cx,cy),350);
+      vib([60,50,120]);
+      burst(cx,cy,56);
+      setTimeout(()=>burst(cx,cy,56),230);
+      setTimeout(()=>burst(cx,cy,56),460);
+      setTimeout(()=>{vib(80);},480);
       setTimeout(()=>{
         cards.forEach(c=>c.el.classList.remove("pulse"));
         halo.classList.remove("on");
@@ -262,17 +267,19 @@ function start(){
   }
 }
 
-/* ========== 启动 ========== */
+/* ========== 启动（扫码即播全力方案） ========== */
 window.addEventListener("load",function(){
   start();
-  makeAudio();
-  startMusic();
-  setTimeout(function(){if(audio&&audio.paused)tryStart();},500);
-  setTimeout(function(){if(audio&&audio.paused)tryStart();},1500);
+  vib(60);                 // 开屏轻震（安卓微信/Chrome）
+  startMusic();            // 立即尝试播放
+  setTimeout(function(){if(audio.paused)tryStart();},300);
+  setTimeout(function(){if(audio.paused)tryStart();},800);
+  setTimeout(function(){if(audio.paused)tryStart();},1600);
+  setTimeout(function(){if(audio.paused)tryStart();},3000);
 });
-if(document.addEventListener){
-  document.addEventListener("WeixinJSBridgeReady",function(){tryStart();},false);
-}
+/* 微信桥接（脚本已提前在 <head> 注册，这里再补一次直接调用） */
+document.addEventListener("WeixinJSBridgeReady",function(){tryStart();},false);
+
 document.body.addEventListener("click",function(e){
   if(e.target.id==="musicBtn"||e.target.closest("#musicBtn"))return;
   clearAll();running=false;start();
